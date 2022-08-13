@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Título do projeto -->
+<title> Tela de Vendas </title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css"/> 
+<script type="text/javascript">
+	//variável que recebe o valor total da compra
+	var vt = 0;
+	
+	//variável que conta a quantia de produtos
+	var cont = 0;
+
+	//Função que adiciona o produto na lista de compras
+	function addproduto(nomeprod){
+		//adiciona 1 no contador de produtos
+		cont++;
+	
+		//cria um requerimento ajax para criar uma requisição com o arquivo "AddProduto.php"
+		const ajaxap = new XMLHttpRequest();
+		ajaxap.open("POST", "AddProduto.php");
+		ajaxap.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		
+		//enviar ao arquivo "AddProduto.php" o nome do produto
+		var envio = "&txtNomeProd=" + nomeprod;
+		ajaxap.send(envio);
+		
+		//adiciona os produtos na tabela
+		ajaxap.onload = function(){
+			//recebe do arquivo "AddProduto.php" os preços dos produtos e nomes dos fornecedores e adiciona-os à array
+			var array = [];
+			var resp = this.responseText;
+			array = resp.split("-");
+			//adquire o preço do produto contido na array
+			var preco = array[0];
+			//adiciona o preço do produto ao valor total da compra
+			vt += parseFloat(preco);
+			//adquire os fornecedores do produto contido na array
+			var fornecedores = array[1];
+			//exclui o último caractere da string a qual ficaria com uma vírgula a mais que o ideal
+			fornecedores = fornecedores.substring(0, fornecedores.length - 1);
+			//recebe o nome do produto
+			var nome = nomeprod;
+			
+			//cria uma nova linha na tabela a qual diferencia-se pelo id contendo o contador de produtos (que varia sempre que um produto é adicionado à tabela)
+			var trNovo = document.createElement("tr");
+			trNovo.id = "tr" + cont;
+			
+			//adiciona a nova linha criada ao corpo da tabela
+			document.getElementById("corpotbl").appendChild(trNovo);
+			
+			//cria uma nova coluna para o nome a qual diferencia-se pelo id contendo o contador de produtos (que varia sempre que um produto é adicionado à tabela)
+			var tdNome = document.createElement("td");
+			tdNome.id = "tdNome"+cont;
+			
+			//adiciona a coluna de nome criada à linha da tabela com o mesmo contador
+			document.getElementById("tr" + cont).appendChild(tdNome);
+			
+			//cria uma nova coluna para o preço a qual diferencia-se pelo id contendo o contador de produtos (que varia sempre que um produto é adicionado à tabela)
+			var tdPreco = document.createElement("td");
+			tdPreco.id = "tdPreco"+cont;
+			
+			//adiciona a coluna de preço criada à linha da tabela com o mesmo contador
+			document.getElementById("tr" + cont).appendChild(tdPreco);
+			
+			//cria uma nova coluna para os fornecedores a qual diferencia-se pelo id contendo o contador de produtos (que varia sempre que um produto é adicionado à tabela)
+			var tdFornecedores = document.createElement("td");
+			tdFornecedores.id = "tdFornecedores"+cont;
+			
+			//adiciona a coluna de fornecedores criada à linha da tabela com o mesmo contador
+			document.getElementById("tr" + cont).appendChild(tdFornecedores);
+			
+			//insere em seus respectivos elementos os valores contidos nas variáveis nome, preco, fornecedores e valor total
+			document.getElementById("tdNome"+cont).innerHTML = nome;
+			document.getElementById("tdPreco"+cont).innerHTML = preco;
+			document.getElementById("tdFornecedores"+cont).innerHTML = fornecedores;
+			document.getElementById("valottot").value = "Valor Total: " + vt;
+		}
+	}
+	
+	//Função de adicionar venda ao banco de dados
+	function addvenda(){
+		//cria um requerimento ajax para criar uma requisição com o arquivo "AddVenda.php"
+		const ajaxap = new XMLHttpRequest();
+		ajaxap.open("POST", "AddVenda.php");
+		ajaxap.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		
+		//recebe a data que foi realizada a confirmação de venda
+		const date = new Date();
+		var dia = date.getDate();
+		var mes = date.getMonth() + 1;
+		if(mes < 10){
+			mes = "0" + mes
+		}
+		var ano = date.getFullYear();
+		var data = dia + "/" + mes + "/" + ano;
+		
+		//recebe o cep digitado
+		var cep = document.getElementById('cep').value;
+		
+		//verifica se o cep foi digitado
+		if(cep == ""){
+			//caso o cep não tenha sido digitado e haja uma tentativa de confirmação de venda, um alerta é enviado ao usuário
+			alert("CEP não informado!");
+		}else{
+			//envia os dados para o arquivo "AddVenda.php" para que a venda seja cadastrada no banco de dados
+			var envio = "";
+			envio += "&data=" + data;
+			envio += "&valor=" + vt;
+			envio += "&endereco=" + cep;
+			ajaxap.send(envio);
+			
+			//alerta o usuário sobre o sucesso do cadastro da respectiva venda
+			alert("Venda cadastrada!");
+		}
+	}
+	
+	//Botão de escolha do produto A
+	function a(){
+		addproduto("A");
+	}
+	//Botão de escolha do produto B
+	function b(){
+		addproduto("B");
+	}
+	//Botão de escolha do produto C
+	function c(){
+		addproduto("C");
+	}
+	
+	//Método responsável por consultar um CEP no ViaCEP
+	function procuracep(){
+		//Pega o CEP digitado
+		var cep = document.getElementById('cep').value;
+		
+		//Identifica a div a qual o resultado será demonstrado
+		var destino = document.getElementById('divresposta');
+		
+		//cria um requerimento ajax para criar uma requisição com o arquivo "ProcuraCEP.php"
+		const ajaxpc = new XMLHttpRequest();
+		ajaxpc.open("POST", "ProcuraCEP.php");
+		ajaxpc.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		
+		//envia o cep para o arquivo "ProcuraCEP.php" para que seja consultado no site
+		var envio = "&txtCEP=" + cep;
+		ajaxpc.send(envio);
+		
+		//recebe os dados do arquivo
+		ajaxpc.onload = function(){
+			//insere os dados na array
+			var array = [];
+			var resp = this.responseText;
+			array = resp.split(",");
+			//adquire os dados da array
+			var uf = array[1];
+			var cidade = array[2];
+			var bairro = array[3];
+			var rua = array[4];
+			
+			//apresenta as informações ao usuário
+			document.getElementById('uf').placeholder = uf;
+			document.getElementById('cidade').placeholder = cidade;
+			document.getElementById('bairro').placeholder = bairro;
+			document.getElementById('rua').placeholder = rua;
+		}
+	}
+</script>
+</head>
+<body>
+	<div class="modal modal-signin position-static d-block margin-meio " tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg margin-meio" role="document">
+            <div class="modal-content rounded-5 shadow">
+                <div class="modal-header p-5 pb-4 border-bottom-0 cor-bloco">
+                    <p align="center"><h2 class="fw-bold mb-0">Registro de Vendas</h2></p>
+                </div>
+                <div class="modal-body p-5 pt-0 cor-bloco">
+
+                <div class="container">
+					<div class="row" style="text-align: center;">
+						<div class="col-4">
+							<!-- Botão para adicionar o produto A à venda -->
+							<input type="button" value="PRODUTO A" class="btn btn-outline-success" id="bta" onClick="a();"/>
+						</div>
+						<div class="col-4">
+							<!-- Botão para adicionar o produto B à venda -->
+							<input type="button" value="PRODUTO B" class="btn btn-outline-success" id="btb" onClick="b();"/>
+						</div>
+						<div class="col-4">
+							<!-- Botão para adicionar o produto C à venda -->
+							<input type="button" value="PRODUTO C" class="btn btn-outline-success" id="btc" onClick="c();"/></br></br>
+						</div>
+					</div>
+				</div>
+				
+				<!-- Caixas de texto para digitação do cep e mostragem de endereço-->
+				<p align="center"> <input type="text" id="cep" placeholder="CEP (XXXXXXXX)" onBlur="procuracep();" size=12/> </p></br>
+				<p align="center"> <input type="text" id="cidade" placeholder="CIDADE" size=50 readonly/> <input type="text" id="uf" placeholder="UF" size=2 readonly/> </p></br>
+				<p align="center"> <input type="text" id="bairro" placeholder="BAIRRO" size=50 readonly/> </p></br>
+				<p align="center"> <input type="text" id="rua" placeholder="RUA" size=50 readonly/> </p></br>
+				
+				<!-- Botão para concluir a venda -->
+				<p align="center"><input type="button" class="btn btn-outline-success" value="CONCLUIR VENDA" id="btcv" onClick="addvenda();"/></p></br>
+				
+				<!-- div que contém os demonstrativos do valor total e tabela com os produtos da venda -->
+				<div id="divresposta"> 
+					<p align="center">
+						<div class="container mt-3">
+							<!-- área de atualização do valor da venda -->
+							<input type="text" id="valottot" placeholder="Valortotal:" size=50 readonly/>
+							<!-- tabela contendo nomes do produtos vendidos e seus respctivos preço e fornecedores -->							
+							<table class="table table-bordered">
+								<thead>
+								  <tr>
+									<th>Produto</th>
+									<th>Preço</th>
+									<th>Fornecedores</th>
+								  </tr>
+								</thead>
+								<tbody id="corpotbl">
+								</tbody>
+						  </table>
+						</div>
+					</p>
+				</div>
+            </div>
+		</div>
+	</div>
+</body>
+</html>
